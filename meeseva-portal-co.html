@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeeSeva | Driving Licence Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* CO1: Framework Design — CSS Custom Properties (design token system) */
+:root {
+  --navy: #0a1628;
+  --navy-mid: #0f2040;
+  --navy-card: rgba(15,32,64,0.95);
+  --saffron: #FF6B00;
+  --saffron-light: #FF8C38;
+  --saffron-dim: rgba(255,107,0,0.15);
+  --green: #138808;
+  --green-light: #1aad09;
+  --green-dim: rgba(19,136,8,0.15);
+  --blue: #1E78FF;
+  --blue-dim: rgba(30,120,255,0.15);
+  --white: #FFFFFF;
+  --off-white: #F4F7FC;
+  --muted: #8a9bb8;
+  --border: rgba(255,255,255,0.08);
+  --border-saffron: rgba(255,107,0,0.25);
+  --success: #00C853;
+  --warning: #FFB300;
+  --danger: #FF1744;
+  --card-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+html, body {
+  height: 100%; min-height: 100%;
+  font-family: 'Noto Sans', sans-serif;
+  background: var(--navy);
+  color: var(--white);
+}
+
+/* ── GLOBAL BG ── */
+.global-bg {
+  position: fixed; inset: 0; z-index: 0;
+  background: linear-gradient(135deg, #0a1628 0%, #071020 50%, #0d1e38 100%);
+  overflow: hidden;
+}
+.bg-grid {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(255,107,0,0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,107,0,0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridScroll 20s linear infinite;
+}
+@keyframes gridScroll { from{background-position:0 0} to{background-position:50px 50px} }
+
+.bg-glow-1 { position:absolute; width:600px; height:600px; border-radius:50%; background:radial-gradient(circle,rgba(255,107,0,0.10) 0%,transparent 70%); top:-200px; left:-100px; animation:pulse1 6s ease-in-out infinite; }
+.bg-glow-2 { position:absolute; width:500px; height:500px; border-radius:50%; background:radial-gradient(circle,rgba(19,136,8,0.08) 0%,transparent 70%); bottom:-150px; right:-100px; animation:pulse2 8s ease-in-out infinite; }
+@keyframes pulse1 { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.15);opacity:0.7} }
+@keyframes pulse2 { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.2);opacity:0.6} }
+
+/* ── TRICOLOUR ── */
+.tricolor { position:fixed; top:0; left:0; right:0; height:4px; z-index:200; display:flex; }
+.tricolor-saffron { flex:1; background:#FF6B00; }
+.tricolor-white   { flex:1; background:#FFFFFF; }
+.tricolor-green   { flex:1; background:#138808; }
+
+/* ── SIDEBAR ── */
+/* CO1: Framework Design — Fixed sidebar layout using position:fixed */
+.sidebar {
+  position: fixed; top:0; left:0; bottom:0; width:240px; z-index:100;
+  background: rgba(7,16,32,0.97);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding-top: 4px;
+  backdrop-filter: blur(20px);
+}
+.sidebar-logo {
+  display: flex; align-items: center; gap: 12px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-emblem {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: linear-gradient(135deg, #FF6B00, #FF8C38);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px; font-weight: 700; color: white;
+  box-shadow: 0 0 20px rgba(255,107,0,0.35); flex-shrink: 0;
+}
+.sidebar-title { font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700; line-height: 1.2; }
+.sidebar-title span { display:block; font-size: 10px; color: var(--muted); font-weight:400; letter-spacing:1px; text-transform:uppercase; }
+
+.sidebar-section { padding: 12px 12px 4px; font-size:9px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+
+/* CO3: Component Model — Navigation item reusable component */
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; margin: 1px 8px; border-radius: 7px;
+  cursor: pointer; transition: all 0.2s;
+  font-size: 13px; color: var(--muted);
+  border: 1px solid transparent;
+}
+.nav-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+.nav-item.active { background: var(--saffron-dim); border-color: var(--border-saffron); color: var(--white); }
+.nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-item .nav-badge {
+  margin-left: auto; background: var(--saffron); color: white;
+  font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px;
+}
+
+.sidebar-user {
+  margin-top: auto; padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--saffron), var(--green));
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; color: white;
+}
+.user-info .user-name { font-size: 13px; font-weight: 500; }
+.user-info .user-id { font-size: 10px; color: var(--muted); }
+.btn-logout { margin-left:auto; background:none; border:none; cursor:pointer; font-size:16px; opacity:0.5; transition:opacity 0.2s; }
+.btn-logout:hover { opacity:1; }
+
+/* ── MAIN CONTENT ── */
+.main { margin-left: 240px; padding: 28px 32px; position: relative; z-index: 10; min-height: 100vh; }
+
+.page { display: none; animation: fadeIn 0.35s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── PAGE HEADER ── */
+.page-header { margin-bottom: 28px; }
+.page-header h1 { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; }
+.page-header p { color:var(--muted); font-size:13px; margin-top:4px; }
+.breadcrumb { font-size:11px; color:var(--muted); margin-bottom:8px; letter-spacing:0.5px; }
+.breadcrumb span { color:var(--saffron); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--navy-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  backdrop-filter: blur(10px);
+}
+.card-sm { padding: 16px 20px; border-radius: 10px; }
+
+/* ── STAT CARDS ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+/* CO3: Component Composition — Stat card component (icon + value + label) */
+.stat-card {
+  background: var(--navy-card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; display: flex; align-items: center; gap: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow); }
+.stat-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+.stat-icon.orange { background:var(--saffron-dim); border:1px solid var(--border-saffron); }
+.stat-icon.green  { background:var(--green-dim); border:1px solid rgba(19,136,8,0.25); }
+.stat-icon.blue   { background:var(--blue-dim); border:1px solid rgba(30,120,255,0.25); }
+.stat-icon.purple { background:rgba(150,80,255,0.15); border:1px solid rgba(150,80,255,0.25); }
+.stat-val { font-family:'Rajdhani',sans-serif; font-size:28px; font-weight:700; line-height:1; }
+.stat-label { font-size:12px; color:var(--muted); margin-top:2px; }
+.stat-change { font-size:11px; color:var(--success); margin-top:4px; }
+
+/* ── FORM ELEMENTS ── */
+/* CO3: Styling (Tailwind equivalent) — CSS Grid responsive form layout */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+.form-group { margin-bottom: 18px; }
+.form-group.full { grid-column: 1/-1; }
+.form-label {
+  display:block; font-size:11px; font-weight:500;
+  color:var(--muted); letter-spacing:1.5px;
+  text-transform:uppercase; margin-bottom:8px;
+}
+.input-wrap { position:relative; }
+.input-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-size:15px; opacity:0.4; pointer-events:none; }
+/* CO3: Component — form-input reusable styled input */
+.form-input {
+  width:100%; padding: 11px 14px 11px 40px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; color: var(--white);
+  font-size: 14px; font-family: 'Noto Sans', sans-serif;
+  transition: border-color 0.2s, background 0.2s;
+}
+.form-input:focus { outline:none; border-color:var(--saffron); background:rgba(255,107,0,0.05); }
+.form-input::placeholder { color:var(--muted); }
+select.form-input { padding-left: 40px; cursor: pointer; }
+select.form-input option { background: #0f2040; }
+.form-input-bare { padding-left: 14px; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 11px 24px; border-radius: 8px; border: none; cursor: pointer;
+  font-family: 'Noto Sans', sans-serif; font-size: 13px; font-weight: 600;
+  letter-spacing: 0.5px; transition: all 0.2s; display: inline-flex;
+  align-items: center; gap: 8px;
+}
+/* CO3: Component — Primary button variant with gradient */
+.btn-primary {
+  background: linear-gradient(135deg, var(--saffron), var(--saffron-light));
+  color: white; box-shadow: 0 4px 16px rgba(255,107,0,0.35);
+}
+.btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(255,107,0,0.45); }
+.btn-secondary { background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--white); }
+.btn-secondary:hover { background: rgba(255,255,255,0.1); }
+.btn-green { background:linear-gradient(135deg,#138808,#1aad09); color:white; box-shadow:0 4px 16px rgba(19,136,8,0.3); }
+.btn-green:hover { transform:translateY(-1px); }
+.btn-danger { background:rgba(255,23,68,0.15); border:1px solid rgba(255,23,68,0.3); color:#FF6B8A; }
+.btn-sm { padding: 7px 14px; font-size:12px; }
+.btn-lg { padding: 14px 32px; font-size:14px; }
+
+/* ── BADGE / TAG ── */
+/* CO3: Component — Badge/tag reusable status indicator */
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+}
+.badge-success { background:rgba(0,200,83,0.15); color:#00E676; border:1px solid rgba(0,200,83,0.25); }
+.badge-warning { background:rgba(255,179,0,0.15); color:#FFD740; border:1px solid rgba(255,179,0,0.25); }
+.badge-danger  { background:rgba(255,23,68,0.15);  color:#FF6B8A; border:1px solid rgba(255,23,68,0.25); }
+.badge-blue    { background:rgba(30,120,255,0.15); color:#82B1FF; border:1px solid rgba(30,120,255,0.25); }
+.badge-muted   { background:rgba(138,155,184,0.12); color:var(--muted); border:1px solid var(--border); }
+
+/* ── PROGRESS BAR ── */
+/* CO4: State Architecture — Progress bar reflects application progress state */
+.progress-bar { height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; }
+.progress-fill { height:100%; border-radius:3px; transition:width 0.5s ease; }
+.fill-saffron { background:linear-gradient(90deg,var(--saffron),var(--saffron-light)); }
+.fill-green   { background:linear-gradient(90deg,var(--green),var(--green-light)); }
+.fill-blue    { background:linear-gradient(90deg,var(--blue),#82B1FF); }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x:auto; }
+/* CO2: TypeScript/Data — Table renders structured data models */
+table { width:100%; border-collapse:collapse; }
+thead tr { border-bottom:1px solid var(--border); }
+th { padding:10px 14px; font-size:11px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; text-align:left; font-weight:500; }
+td { padding:12px 14px; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.04); }
+tbody tr:hover { background:rgba(255,255,255,0.02); }
+tbody tr:last-child td { border-bottom:none; }
+
+/* ── STEP INDICATOR ── */
+.steps-bar { display:flex; align-items:center; margin-bottom:32px; }
+/* CO4: State Architecture — Step indicator reflects multi-step form state */
+.step-dot {
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700;
+  border: 2px solid var(--border); color:var(--muted);
+  background: rgba(255,255,255,0.04); flex-shrink:0; transition:all 0.3s;
+}
+.step-dot.done  { background:var(--green); border-color:var(--green); color:white; }
+.step-dot.active { background:var(--saffron); border-color:var(--saffron); color:white; box-shadow:0 0 16px rgba(255,107,0,0.4); }
+.step-line { flex:1; height:2px; background:var(--border); margin:0 6px; }
+.step-line.done { background:var(--green); }
+.step-label { font-size:11px; color:var(--muted); margin-top:4px; text-align:center; }
+.steps-labels { display:flex; justify-content:space-between; margin-top:6px; }
+.steps-labels span { font-size:10px; color:var(--muted); flex:1; text-align:center; }
+.steps-labels span.active { color:var(--saffron); }
+.steps-labels span.done   { color:var(--green-light); }
+
+/* ── TIMELINE ── */
+/* CO4: State Architecture — Timeline component reflects application state stages */
+.timeline { display:flex; flex-direction:column; gap:0; }
+.tl-item { display:flex; gap:16px; }
+.tl-left { display:flex; flex-direction:column; align-items:center; }
+.tl-dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; margin-top:3px; }
+.tl-dot.done   { background:var(--green); box-shadow:0 0 10px rgba(19,136,8,0.5); }
+.tl-dot.active { background:var(--saffron); box-shadow:0 0 10px rgba(255,107,0,0.5); animation:dotPulse 1.5s ease infinite; }
+.tl-dot.pending { background:rgba(255,255,255,0.15); }
+@keyframes dotPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+.tl-line { flex:1; width:2px; background:var(--border); margin:4px 0; min-height:40px; }
+.tl-line.done { background:var(--green); }
+.tl-content { padding-bottom:28px; }
+.tl-title { font-weight:600; font-size:14px; }
+.tl-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+.tl-desc { font-size:13px; color:rgba(255,255,255,0.7); margin-top:4px; }
+
+/* ── CALENDAR ── */
+/* CO5: Routing & UX — Calendar grid for slot/test date selection */
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.cal-day-name { text-align:center; font-size:11px; color:var(--muted); padding:4px 0; }
+.cal-day {
+  aspect-ratio:1; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-size:13px; cursor:pointer; transition:all 0.2s;
+  border:1px solid transparent;
+}
+.cal-day:hover:not(.disabled):not(.selected) { background:rgba(255,255,255,0.06); border-color:var(--border-saffron); }
+.cal-day.selected { background:var(--saffron); color:white; font-weight:600; }
+.cal-day.available { color:var(--white); }
+.cal-day.limited { color:var(--warning); }
+.cal-day.full { color:var(--muted); cursor:not-allowed; text-decoration:line-through; }
+.cal-day.disabled { color:rgba(255,255,255,0.15); cursor:not-allowed; }
+.cal-day.today { border-color:var(--saffron); color:var(--saffron); font-weight:600; }
+
+/* ── PAYMENT CARDS ── */
+.payment-methods { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+.pay-method {
+  flex:1; min-width:120px; padding:16px; border-radius:10px;
+  border:2px solid var(--border); cursor:pointer; transition:all 0.2s; text-align:center;
+  background: rgba(255,255,255,0.03);
+}
+.pay-method:hover { border-color:var(--border-saffron); background:var(--saffron-dim); }
+.pay-method.selected { border-color:var(--saffron); background:var(--saffron-dim); }
+.pay-icon { font-size:28px; margin-bottom:6px; }
+.pay-name { font-size:12px; font-weight:600; }
+
+/* ── CERTIFICATE ── */
+/* CO6: Build Systems — Certificate preview (downloadable artefact, production output) */
+.cert-preview {
+  background: linear-gradient(135deg, #0a2518 0%, #051a0a 100%);
+  border: 2px solid var(--green);
+  border-radius: 12px; padding: 32px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 0 40px rgba(19,136,8,0.2);
+}
+.cert-preview::before {
+  content:''; position:absolute; inset:0;
+  background-image: repeating-linear-gradient(45deg,rgba(19,136,8,0.03) 0,rgba(19,136,8,0.03) 1px,transparent 1px,transparent 10px);
+}
+.cert-header { display:flex; align-items:center; gap:16px; margin-bottom:24px; position:relative; }
+.cert-emblem { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,var(--green),#22cc0a); display:flex; align-items:center; justify-content:center; font-family:'Rajdhani',sans-serif; font-size:20px; font-weight:700; color:white; }
+.cert-title { font-family:'Rajdhani',sans-serif; }
+.cert-title h2 { font-size:20px; font-weight:700; }
+.cert-title p { font-size:11px; color:var(--muted); }
+.cert-body { display:grid; grid-template-columns:1fr 1fr; gap:12px; position:relative; }
+.cert-field { }
+.cert-field label { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+.cert-field p { font-size:14px; font-weight:600; margin-top:2px; }
+.cert-stamp {
+  position:absolute; bottom:24px; right:24px;
+  width:80px; height:80px; border-radius:50%;
+  border:3px solid rgba(19,136,8,0.4);
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  font-size:9px; color:rgba(19,136,8,0.7); font-weight:600; letter-spacing:0.5px;
+  background:rgba(19,136,8,0.06);
+}
+.cert-dl-num {
+  margin:20px 0 8px; position:relative;
+  font-family:'Rajdhani',sans-serif; font-size:22px; font-weight:700;
+  color:var(--green-light); letter-spacing:2px;
+}
+
+/* ── NOTIFICATION ITEMS ── */
+.notif-item {
+  display:flex; gap:14px; padding:14px;
+  border-radius:10px; margin-bottom:8px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  transition:background 0.2s;
+}
+.notif-item:hover { background:rgba(255,255,255,0.05); }
+.notif-item.unread { border-left:3px solid var(--saffron); }
+.notif-icon-wrap { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.notif-time { font-size:11px; color:var(--muted); margin-top:3px; }
+.notif-title { font-size:13px; font-weight:600; }
+.notif-desc { font-size:12px; color:var(--muted); margin-top:2px; }
+
+/* ── ADMIN TABLE ── */
+.admin-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.admin-filter { display:flex; gap:8px; flex-wrap:wrap; }
+
+/* ── ELIGIBILITY CHECKS ── */
+.check-item {
+  display:flex; align-items:center; gap:14px;
+  padding:14px 18px; border-radius:10px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border); margin-bottom:10px;
+}
+.check-status { font-size:20px; flex-shrink:0; }
+.check-label { font-size:13px; font-weight:500; }
+.check-detail { font-size:12px; color:var(--muted); margin-top:2px; }
+
+/* ── UPI INPUT ── */
+.upi-box { background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:10px; padding:20px; }
+.amount-display { font-family:'Rajdhani',sans-serif; font-size:36px; font-weight:700; color:var(--saffron); }
+
+/* ── TOOLTIP ── */
+.tooltip-wrap { position:relative; display:inline-block; }
+.tooltip-txt {
+  display:none; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+  background:#0f2040; border:1px solid var(--border); border-radius:6px;
+  padding:6px 10px; font-size:11px; color:var(--white); white-space:nowrap; z-index:999;
+}
+.tooltip-wrap:hover .tooltip-txt { display:block; }
+
+/* ── TOAST ── */
+/* CO3: Component — Toast notification (global feedback component) */
+.toast {
+  position:fixed; bottom:24px; right:24px; z-index:9999;
+  background:var(--navy-mid); border:1px solid var(--border);
+  border-radius:10px; padding:14px 18px;
+  display:flex; align-items:center; gap:10px;
+  font-size:13px; box-shadow:var(--card-shadow);
+  transform:translateY(20px); opacity:0; transition:all 0.3s;
+  min-width:260px;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.success { border-left:3px solid var(--success); }
+.toast.warning { border-left:3px solid var(--warning); }
+.toast.info    { border-left:3px solid var(--blue); }
+
+/* ── MISC ── */
+.section-title { font-family:'Rajdhani',sans-serif; font-size:18px; font-weight:700; margin-bottom:16px; }
+.section-divider { border:none; border-top:1px solid var(--border); margin:24px 0; }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; }
+.flex-row { display:flex; align-items:center; gap:12px; }
+.flex-between { display:flex; align-items:center; justify-content:space-between; }
+.mt8 { margin-top:8px; } .mt12{margin-top:12px;} .mt16{margin-top:16px;} .mt24{margin-top:24px;} .mb16{margin-bottom:16px;}
+.text-muted { color:var(--muted); font-size:13px; }
+.text-sm { font-size:12px; }
+.text-green { color:var(--green-light); }
+.text-saffron { color:var(--saffron); }
+.text-danger { color:#FF6B8A; }
+.font-raj { font-family:'Rajdhani',sans-serif; }
+.fw600 { font-weight:600; }
+.fw700 { font-weight:700; }
+
+/* scrollbar */
+::-webkit-scrollbar { width:6px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(255,107,0,0.25); border-radius:3px; }
+
+/* mobile responsive */
+@media (max-width:768px) {
+  .sidebar { width:200px; }
+  .main { margin-left:200px; padding:16px; }
+  .stats-grid { grid-template-columns:1fr 1fr; }
+  .form-grid, .two-col { grid-template-columns:1fr; }
+  .form-grid-3,.three-col { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="global-bg">
+  <div class="bg-grid"></div>
+  <div class="bg-glow-1"></div>
+  <div class="bg-glow-2"></div>
+</div>
+
+<div class="tricolor"><div class="tricolor-saffron"></div><div class="tricolor-white"></div><div class="tricolor-green"></div></div>
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-emblem">MS</div>
+    <div class="sidebar-title">MeeSeva DL<span>Transport · Telangana</span></div>
+  </div>
+
+  <div class="sidebar-section">Citizen</div>
+  <div class="nav-item active" onclick="nav('dashboard')">
+    <span class="nav-icon">🏠</span> Dashboard
+  </div>
+  <div class="nav-item" onclick="nav('eligibility')">
+    <span class="nav-icon">✅</span> Eligibility Check
+  </div>
+  <div class="nav-item" onclick="nav('application')">
+    <span class="nav-icon">📋</span> Application Form
+  </div>
+  <div class="nav-item" onclick="nav('payment')">
+    <span class="nav-icon">💳</span> Fee Payment
+  </div>
+  <div class="nav-item" onclick="nav('slot')">
+    <span class="nav-icon">📅</span> Slot Booking
+  </div>
+  <div class="nav-item" onclick="nav('test')">
+    <span class="nav-icon">🚗</span> Test Scheduler
+  </div>
+  <div class="nav-item" onclick="nav('status')">
+    <span class="nav-icon">📍</span> Status Tracker
+  </div>
+  <div class="nav-item" onclick="nav('certificate')">
+    <span class="nav-icon">🪪</span> Certificate PDF
+  </div>
+  <div class="nav-item" onclick="nav('notifications')" id="navNotif">
+    <span class="nav-icon">🔔</span> Notifications
+    <span class="nav-badge">3</span>
+  </div>
+
+  <div class="sidebar-section">Admin</div>
+  <div class="nav-item" onclick="nav('admin')">
+    <span class="nav-icon">🛡️</span> Admin Panel
+  </div>
+
+  <div class="sidebar-user">
+    <div class="user-avatar">RK</div>
+    <div class="user-info">
+      <div class="user-name">Ravi Kumar</div>
+      <div class="user-id">9876543210</div>
+    </div>
+    <button class="btn-logout" onclick="showToast('Logged out successfully','success')">⏻</button>
+  </div>
+</nav>
+
+<!-- ══ MAIN CONTENT ══════════════════════════════════════ -->
+<main class="main">
+
+<!-- ─────────────────────────────── 1. DASHBOARD ─── -->
+<section id="page-dashboard" class="page active">
+  <div class="page-header">
+    <div class="breadcrumb">MeeSeva DL Portal › <span>Dashboard</span></div>
+    <h1>Welcome back, Ravi Kumar 👋</h1>
+    <p>Here's an overview of your driving licence applications and activity.</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon orange">📋</div>
+      <div>
+        <div class="stat-val">2</div>
+        <div class="stat-label">Active Applications</div>
+        <div class="stat-change">↑ 1 this month</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">🪪</div>
+      <div>
+        <div class="stat-val">1</div>
+        <div class="stat-label">Licences Issued</div>
+        <div class="stat-change text-green">Valid till 2034</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon blue">📅</div>
+      <div>
+        <div class="stat-val">Jun 14</div>
+        <div class="stat-label">Next Test Date</div>
+        <div class="stat-change" style="color:var(--saffron)">RTO Hyderabad</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon purple">💳</div>
+      <div>
+        <div class="stat-val">₹800</div>
+        <div class="stat-label">Total Fees Paid</div>
+        <div class="stat-change text-green">All cleared</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col mb16">
+    <!-- Application Cards -->
+    <div class="card">
+      <div class="flex-between mb16">
+        <div class="section-title" style="margin:0">My Applications</div>
+        <button class="btn btn-secondary btn-sm" onclick="nav('application')">+ New</button>
+      </div>
+      <!-- App Card 1 -->
+      <div class="card card-sm mb16" style="background:rgba(255,107,0,0.05);border-color:var(--border-saffron)">
+        <div class="flex-between">
+          <div>
+            <div class="fw600" style="font-size:14px">Learner's Licence</div>
+            <div class="text-muted text-sm mt8">App ID: LL-TG-2025-088412</div>
+          </div>
+          <span class="badge badge-warning">In Progress</span>
+        </div>
+        <div class="progress-bar mt12"><div class="progress-fill fill-saffron" style="width:65%"></div></div>
+        <div class="flex-between mt8">
+          <span class="text-sm text-muted">Step 3 of 5 — Test Scheduled</span>
+          <button class="btn btn-secondary btn-sm" onclick="nav('status')">Track →</button>
+        </div>
+      </div>
+      <!-- App Card 2 -->
+      <div class="card card-sm" style="background:rgba(19,136,8,0.05);border-color:rgba(19,136,8,0.2)">
+        <div class="flex-between">
+          <div>
+            <div class="fw600" style="font-size:14px">Permanent DL (LMV)</div>
+            <div class="text-muted text-sm mt8">App ID: DL-TG-2024-001233</div>
+          </div>
+          <span class="badge badge-success">Approved</span>
+        </div>
+        <div class="progress-bar mt12"><div class="progress-fill fill-green" style="width:100%"></div></div>
+        <div class="flex-between mt8">
+          <span class="text-sm text-muted">Issued on 14 Mar 2024</span>
+          <button class="btn btn-secondary btn-sm" onclick="nav('certificate')">Download →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom:16px">Quick Actions</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <button class="btn btn-secondary" style="flex-direction:column;padding:18px;text-align:center;gap:6px" onclick="nav('eligibility')">
+          <span style="font-size:24px">✅</span><span>Check Eligibility</span>
+        </button>
+        <button class="btn btn-secondary" style="flex-direction:column;padding:18px;text-align:center;gap:6px" onclick="nav('slot')">
+          <span style="font-size:24px">📅</span><span>Book RTO Slot</span>
+        </button>
+        <button class="btn btn-secondary" style="flex-direction:column;padding:18px;text-align:center;gap:6px" onclick="nav('payment')">
+          <span style="font-size:24px">💳</span><span>Pay Fees</span>
+        </button>
+        <button class="btn btn-secondary" style="flex-direction:column;padding:18px;text-align:center;gap:6px" onclick="nav('certificate')">
+          <span style="font-size:24px">📄</span><span>Download DL</span>
+        </button>
+      </div>
+      <hr class="section-divider">
+      <div class="section-title" style="font-size:15px;margin-bottom:12px">Recent Activity</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div class="flex-row" style="justify-content:space-between">
+          <div class="flex-row"><span>🟢</span><span class="text-sm">Test slot booked — Jun 14, 10:00 AM</span></div>
+          <span class="text-sm text-muted">2d ago</span>
+        </div>
+        <div class="flex-row" style="justify-content:space-between">
+          <div class="flex-row"><span>💳</span><span class="text-sm">Fee paid ₹300 — LL Application</span></div>
+          <span class="text-sm text-muted">5d ago</span>
+        </div>
+        <div class="flex-row" style="justify-content:space-between">
+          <div class="flex-row"><span>📋</span><span class="text-sm">Application LL submitted</span></div>
+          <span class="text-sm text-muted">6d ago</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DL Info Banner -->
+  <div class="card" style="background:linear-gradient(135deg,rgba(19,136,8,0.1),rgba(19,136,8,0.04));border-color:rgba(19,136,8,0.25)">
+    <div class="flex-row" style="flex-wrap:wrap;gap:24px">
+      <div><div class="text-muted text-sm">DL Number</div><div class="fw700 font-raj" style="font-size:18px;color:var(--green-light)">TG0420240012330</div></div>
+      <div><div class="text-muted text-sm">Licence Type</div><div class="fw600">LMV / MCWG</div></div>
+      <div><div class="text-muted text-sm">Valid From</div><div class="fw600">14 Mar 2024</div></div>
+      <div><div class="text-muted text-sm">Valid To</div><div class="fw600">13 Mar 2044</div></div>
+      <div><div class="text-muted text-sm">Issuing RTO</div><div class="fw600">Hyderabad (Central)</div></div>
+      <button class="btn btn-green btn-sm" style="margin-left:auto" onclick="nav('certificate')">🪪 Download PDF</button>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────── 2. ELIGIBILITY ─── -->
+<section id="page-eligibility" class="page">
+  <div class="page-header">
+    <div class="breadcrumb">MeeSeva DL Portal › <span>Eligibility Check</span></div>
+    <h1>Eligibility Checker</h1>
+    <p>Verify your eligibility before starting a Learner's or Permanent Licence application.</p>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="card mb16">
+        <div class="section-title">Enter Your Details</div>
+        <div class="form-group">
+          <label class="form-label">Date of Birth</label>
+          <div class="input-wrap">
+            <span class="input-icon">🎂</span>
+            <input type="date" class="form-input" id="eligDob" onchange="calcEligibility()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Licence Type to Apply</label>
+          <div class="input-wrap">
+            <span class="input-icon">🚗</span>
+            <select class="form-input" id="eligType" onchange="calcEligibility()">
+              <option value="">— Select —</option>
+              <option value="LL_MC">LL — Motorcycle (≥16 yrs)</option>
+              <option value="LL_LMV">LL — LMV Car (≥18 yrs)</option>
+              <option value="DL_LMV">DL — LMV Car (≥18 yrs)</option>
+              <option value="DL_TRANS">DL — Transport Vehicle (≥20 yrs)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Aadhar Number (for name match)</label>
+          <div class="input-wrap">
+            <span class="input-icon">🪪</span>
+            <input type="text" class="form-input form-input-bare" style="padding-left:40px" placeholder="XXXX XXXX XXXX" maxlength="14" id="eligAadhar">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="runEligibility()">Check Eligibility →</button>
+      </div>
+
+      <!-- Document checklist -->
+      <div class="card">
+        <div class="section-title">Required Documents</div>
+        <div class="check-item">
+          <span class="check-status">📄</span>
+          <div><div class="check-label">Age Proof</div><div class="check-detail">Birth Certificate / 10th Marksheet / Aadhaar</div></div>
+        </div>
+        <div class="check-item">
+          <span class="check-status">📄</span>
+          <div><div class="check-label">Address Proof</div><div class="check-detail">Aadhaar / Passport / Utility Bill (3 months)</div></div>
+        </div>
+        <div class="check-item">
+          <span class="check-status">🖼️</span>
+          <div><div class="check-label">Passport Photo</div><div class="check-detail">Recent, white background, 3.5×4.5 cm</div></div>
+        </div>
+        <div class="check-item">
+          <span class="check-status">✍️</span>
+          <div><div class="check-label">Medical Certificate (Form 1A)</div><div class="check-detail">Required for Transport & HMV licences only</div></div>
+        </div>
+        <div class="check-item">
+          <span class="check-status">🪪</span>
+          <div><div class="check-label">Existing LL (for DL)</div><div class="check-label" style="color:var(--saffron)">LL must be ≥30 days old</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result panel -->
+    <div id="eligResult" style="display:none">
+      <div class="card" id="eligResultCard">
+        <div class="section-title">Eligibility Result</div>
+        <div id="eligChecks"></div>
+        <hr class="section-divider">
+        <div id="eligVerdict"></div>
+      </div>
+    </div>
+
+    <!-- Default info -->
+    <div id="eligInfo" class="card">
+      <div style="text-align:center;padding:32px 0;color:var(--muted)">
+        <div style="font-size:56px;margin-bottom:16px">✅</div>
+        <div class="fw600" style="font-size:16px;color:var(--white)">Enter Details to Check</div>
+        <p class="mt8">Fill your date of birth and licence type to see your eligibility and required documents.</p>
+      </div>
+      <hr class="section-divider">
+      <div class="section-title">Age Requirements</div>
+      <table>
+        <thead><tr><th>Licence</th><th>Min Age</th></tr></thead>
+        <tbody>
+          <tr><td>LL — Motorcycle (Gearless &lt;50cc)</td><td><span class="badge badge-blue">16 yrs</span></td></tr>
+          <tr><td>LL / DL — LMV (Car)</td><td><span class="badge badge-blue">18 yrs</span></td></tr>
+          <tr><td>DL — Transport Vehicle</td><td><span class="badge badge-warning">20 yrs</span></td></tr>
+          <tr><td>DL — HMV / Articulated</td><td><span class="badge badge-warning">20 yrs</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────── 3. APPLICATION FORM ─── -->
+<section id="page-application" class="page">
+  <div class="page-header">
+    <div class="breadcrumb">MeeSeva DL Portal › <span>Application Form</span></div>
+    <h1>Apply for Driving Licence</h1>
+    <p>Complete all steps to submit your Learner's or Permanent Driving Licence application.</p>
+  </div>
+
+  <!-- Steps -->
+  <div class="card mb16">
+    <div class="steps-bar" id="appSteps">
+      <div class="step-dot active" id="sd1">1</div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-dot" id="sd2">2</div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-dot" id="sd3">3</div>
+      <div class="step-line" id="sl3"></div>
+      <div class="step-dot" id="sd4">4</div>
+      <div class="step-line" id="sl4"></div>
+      <div class="step-dot" id="sd5">5</div>
+    </div>
+    <div class="steps-labels">
+      <span class="active" id="sl-1">Personal</span>
+      <span id="sl-2">Licence Type</span>
+      <span id="sl-3">Documents</span>
+      <span id="sl-4">Review</span>
+      <span id="sl-5">Submit</span>
+    </div>
+  </div>
+
+  <!-- Step 1 -->
+  <div id="appStep1" class="card">
+    <div class="section-title">Personal Information</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">First Name</label>
+        <div class="input-wrap"><span class="input-icon">👤</span><input type="text" class="form-input" placeholder="As per Aadhaar" value="Ravi"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name</label>
+        <div class="input-wrap"><span class="input-icon">👤</span><input type="text" class="form-input" placeholder="Last name" value="Kumar"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date of Birth</label>
+        <div class="input-wrap"><span class="input-icon">🎂</span><input type="date" class="form-input" value="1998-05-15"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gender</label>
+        <div class="input-wrap"><span class="input-icon">🧑</span>
+          <select class="form-input"><option>Male</option><option>Female</option><option>Other</option></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile Number</label>
+        <div class="input-wrap"><span class="input-icon">📱</span><input type="tel" class="form-input" value="9876543210"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address</label>
+        <div class="input-wrap"><span class="input-icon">✉️</span><input type="email" class="form-input" placeholder="Optional"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Aadhaar Number</label>
+        <div class="input-wrap"><span class="input-icon">🪪</span><input type="text" class="form-input" placeholder="XXXX XXXX XXXX"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Blood Group</label>
+        <div class="input-wrap"><span class="input-icon">🩸</span>
+          <select class="form-input"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select>
+        </div>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Permanent Address</label>
+        <div class="input-wrap"><span class="input-icon">🏠</span><input type="text" class="form-input" placeholder="Door No, Street, Area, City, Pincode"></div>
+      </div>
+    </div>
+    <div class="flex-row mt8">
+      <button class="btn btn-primary" onclick="appNext(1)">Next: Licence Type →</button>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div id="appStep2" class="card" style="display:none">
+    <div class="section-title">Licence Type & Vehicle Class</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Application Type</label>
+        <div class="input-wrap"><span class="input-icon">📋</span>
+          <select class="form-input" id="appType">
+            <option value="LL">Learner's Licence (LL)</option>
+            <option value="DL">Permanent DL (fresh)</option>
+            <option value="RENEW">DL Renewal</option>
+            <option value="INTL">International DL</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Vehicle Class</label>
+        <div class="input-wrap"><span class="input-icon">🚗</span>
+          <select class="form-input">
+            <option>MCWG — Motorcycle with Gear</option>
+            <option>MCWOG — Motorcycle without Gear</option>
+            <option>LMV — Light Motor Vehicle (Car)</option>
+            <option>TRANS — Transport Vehicle</option>
+            <option>HMV — Heavy Motor Vehicle</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Existing LL Number (for DL)</label>
+        <div class="input-wrap"><span class="input-icon">🪪</span><input type="text" class="form-input" placeholder="Leave blank if applying for LL"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">LL Issue Date</label>
+        <div class="input-wrap"><span class="input-icon">📅</span><input type="date" class="form-input"></div>
+      </div>
+    </div>
+    <div class="card card-sm" style="background:var(--saffron-dim);border-color:var(--border-saffron);margin-top:8px">
+      <div class="flex-row"><span>ℹ️</span><span class="text-sm">For DL (Permanent), your Learner's Licence must be at least 30 days old and not more than 6 months old.</span></div>
+    </div>
+    <div class="flex-row mt16">
+      <button class="btn btn-secondary" onclick="appBack(2)">← Back</button>
+      <button class="btn btn-primary" onclick="appNext(2)">Next: Documents →</button>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div id="appStep3" class="card" style="display:none">
+    <div class="section-title">Upload Documents</div>
+    <div id="docUploads" style="display:flex;flex-direction:column;gap:12px">
+    </div>
+    <div class="flex-row mt16">
+      <button class="btn btn-secondary" onclick="appBack(3)">← Back</button>
+      <button class="btn btn-primary" onclick="appNext(3)">Next: Review →</button>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div id="appStep4" class="card" style="display:none">
+    <div class="section-title">Review Application</div>
+    <div class="two-col">
+      <div>
+        <div class="text-muted text-sm mb16">Personal Details</div>
+        <table><tbody>
+          <tr><td class="text-muted text-sm">Name</td><td class="fw600">Ravi Kumar</td></tr>
+          <tr><td class="text-muted text-sm">DOB</td><td>15 May 1998</td></tr>
+          <tr><td class="text-muted text-sm">Mobile</td><td>9876543210</td></tr>
+          <tr><td class="text-muted text-sm">Blood Group</td><td>A+</td></tr>
+        </tbody></table>
+      </div>
+      <div>
+        <div class="text-muted text-sm mb16">Licence Details</div>
+        <table><tbody>
+          <tr><td class="text-muted text-sm">Type</td><td class="fw600">Learner's Licence</td></tr>
+          <tr><td class="text-muted text-sm">Vehicle Class</td><td>LMV — Car</td></tr>
+          <tr><td class="text-muted text-sm">RTO</td><td>Hyderabad (Central)</td></tr>
+          <tr><td class="text-muted text-sm">Fee</td><td class="text-saffron fw600">₹300</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+    <div class="card card-sm mt16" style="background:var(--green-dim);border-color:rgba(19,136,8,0.25)">
+      <div class="flex-row"><span>✅</span><span class="text-sm">All documents verified. Application ready to submit.</span></div>
+    </div>
+    <div class="flex-row mt16">
+      <button class="btn btn-secondary" onclick="appBack(4)">← Back</button>
+      <button class="btn btn-primary" onclick="appNext(4)">Proceed to Payment →</button>
+    </div>
+  </div>
+
+  <!-- Step 5 -->
+  <div id="appStep5" class="card" style="display:none;text-align:center;padding:48px">
+    <div style="font-size:64px;margin-bottom:16px">🎉</div>
+    <div class="font-raj fw700" style="font-size:24px">Application Submitted!</div>
+    <p class="text-muted mt8">Your Learner's Licence application has been received.</p>
+    <div class="card card-sm mt24" style="display:inline-block;text-align:left;min-width:300px;background:var(--saffron-dim);border-color:var(--border-saffron)">
+      <div class="text-muted text-sm">Application ID</div>
+      <div class="font-raj fw700" style="font-size:20px;color:var(--saffron)">LL-TG-2025-088412</div>
+      <div class="text-muted text-sm mt8">Expected processing: 7–10 working days</div>
+    </div>
+    <div class="flex-row mt24" style="justify-content:center">
+      <button class="btn btn-primary" onclick="nav('status')">Track Status →</button>
+      <button class="btn btn-secondary" onclick="nav('payment')">Pay Fee</button>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────── 4. FEE PAYMENT ─── -->
+<section id="page-payment" class="page">
+  <div class="page-header">
+    <div class="breadcrumb">MeeSeva DL Portal › <span>Fee Payment</span></div>
+    <h1>Fee Payment</h1>
+    <p>Pay your driving licence application fees securely (Mock Payment Gateway).</p>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <!-- Amount -->
+      <div class="card mb16">
+        <div class="flex-between mb16">
+          <div class="section-title" style="margin:0">Payment Summary</div>
+          <span class="badge badge-warning">Pending</span>
+        </div>
+        <table><tbody>
+          <tr><td class="text-muted">Application Type</td><td class="fw600">Learner's Licence (LL-LMV)</td></tr>
+          <tr><td class="text-muted">Application ID</td><td class="font-raj" style="color:var(--saffron)">LL-TG-2025-088412</td></tr>
+          <tr><td class="text-muted">Applicant</td><td>Ravi Kumar</td></tr>
+          <tr><td class="text-muted">RTO</td><td>Hyderabad (Central)</td></tr>
+        </tbody></table>
+        <hr class="section-divider">
+        <div class="flex-between">
+          <div>
+            <div class="text-muted text-sm">Application Fee</div>
+            <div class="fw600">₹200.00</div>
+          </div>
+          <div>
+            <div class="text-muted text-sm">Smart Card Fee</div>
+            <div class="fw600">₹100.00</div>
+          </div>
+          <div>
+            <div class="text-muted text-sm">Service Charge</div>
+            <div class="fw600">₹30.00</div>
+          </div>
+          <div style="text-align:right">
+            <div class="text-muted text-sm">Total Amount</div>
+            <div class="amount-display">₹330</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Method Selection -->
+      <div class="card">
+        <div class="section-title">Select Payment Method</div>
+        <div class="payment-methods">
+          <div class="pay-method selected" onclick="selectPay(this,'UPI')">
+            <div class="pay-icon">📲</div>
+            <div class="pay-name">UPI</div>
+          </div>
+          <div class="pay-method" onclick="selectPay(this,'CARD')">
+            <div class="pay-icon">💳</div>
+            <div class="pay-name">Card</div>
+          </div>
+          <div class="pay-method" onclick="selectPay(this,'NETBANK')">
+            <div class="pay-icon">🏦</div>
+            <div class="pay-name">Net Banking</div>
+          </div>
+          <div class="pay-method" onclick="selectPay(this,'WALLET')">
+            <div class="pay-icon">👛</div>
+            <div class="pay-name">Wallet</div>
+          </div>
+        </div>
+
+        <!-- UPI -->
+        <div id="payUPI">
+          <div class="form-group">
+            <label class="form-label">UPI ID</label>
+            <div class="input-wrap"><span class="input-icon">📲</span><input type="text" class="form-input" placeholder="yourname@upi" id="upiId"></div>
+          </div>
+          <div style="text-align:center;margin:16px 0;color:var(--muted);font-size:12px">— OR scan QR —</div>
+          <div style="text-align:center">
+            <div style="display:inline-block;background:white;padding:12px;border-radius:10px">
+              <svg width="100" height="100" viewBox="0 0 100 100">
+                <rect width="100" height="100" fill="white"/>
+                <g fill="#0a1628">
+                  <!-- QR pattern (decorative) -->
+                  <rect x="10" y="10" width="30" height="30" rx="2"/><rect x="14" y="14" width="22" height="22" rx="1" fill="white"/><rect x="18" y="18" width="14" height="14" rx="1"/>
+                  <rect x="60" y="10" width="30" height="30" rx="2"/><rect x="64" y="14" width="22" height="22" rx="1" fill="white"/><rect x="68" y="18" width="14" height="14" rx="1"/>
+                  <rect x="10" y="60" width="30" height="30" rx="2"/><rect x="14" y="64" width="22" height="22" rx="1" fill="white"/><rect x="18" y="68" width="14" height="14" rx="1"/>
+                  <rect x="60" y="60" width="6" height="6"/><rect x="68" y="60" width="6" height="6"/><rect x="76" y="60" width="14" height="6"/>
+                  <rect x="60" y="68" width="14" height="6"/><rect x="76" y="68" width="14" height="6"/>
+                  <rect x="60" y="76" width="6" height="14"/><rect x="68" y="76" width="14" height="14"/>
+                  <rect x="46" y="10" width="6" height="6"/><rect x="46" y="20" width="6" height="6"/><rect x="46" y="30" width="6" height="6"/>
+                  <rect x="10" y="46" width="6" height="6"/><rect x="20" y="46" width="6" height="6"/><rect x="30" y="46" width="6" height="6"/>
+                </g>
+              </svg>
+            </div>
+            <div class="text-muted text-sm mt8">Scan with any UPI app</div>
+          </div>
+        </div>
+        <!-- CARD -->
+        <div id="payCAR D" style="display:none">
+          <div class="form-group"><label class="form-label">Card Number</label><div class="input-wrap"><span class="input-icon">💳</span><input type="text" class="form-input" placeholder="XXXX XXXX XXXX XXXX" maxlength="19"></div></div>
+          <div class="form-grid">
+            <div class="form-group"><label class="form-label">Expiry</label><div class="input-wrap"><span class="input-icon">📅</span><input type="text" class="form-input" placeholder="MM/YY"></div></div>
+            <div class="form-group"><label class="form-label">CVV</label><div class="input-wrap"><span class="input-icon">🔒</span><input type="password" class="form-input" placeholder="XXX" maxlength="3"></div></div>
+          </div>
+          <div class="form-group"><label class="form-label">Name on Card</label><div class="input-wrap"><span class="input-icon">👤</span><input type="text" class="form-input" placeholder="Full name"></div></div>
+        </div>
+        <!-- NETBANK -->
+        <div id="payNETBANK" style="display:none">
+          <div class="form-group"><label class="form-label">Select Bank</label><div class="input-wrap"><span class="input-icon">🏦</span>
+            <select class="form-input">
+              <option>State Bank of India</option><option>HDFC Bank</option><option>ICICI Bank</option><option>Axis Bank</option><option>Canara Bank</option><option>Bank of Baroda</option><option>Andhra Bank</option>
+            </select>
+          </div></div>
+          <div class="card card-sm" style="background:var(--blue-dim);border-color:rgba(30,120,255,0.25)">
+            <span class="text-sm">You will be redirected to your bank's secure login page.</span>
+          </div>
+        </div>
+        <!-- WALLET -->
+        <div id="payWALLET" style="display:none">
+          <div class="form-group"><label class="form-label">Select Wallet</label><div class="input-wrap"><span class="input-icon">👛</span>
+            <select class="form-input"><option>Paytm</option><option>PhonePe</option><option>Amazon Pay</option><option>MobiKwik</option></select>
+          </div></div>
+          <div class="form-group"><label class="form-label">Registered Mobile</label><div class="input-wrap"><span class="input-icon">📱</span><input type="tel" class="form-input" placeholder="10-digit mobile"></div></div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" style="width:100%;margin-top:16px;justify-content:center" onclick="processPayment()">
+          🔒 Pay ₹330 Securely
+        </button>
+        <div class="text-muted text-sm mt8" style="text-align:center">🔒 Secured by RazorPay · 256-bit SSL Encryption</div>
+      </div>
+    </div>
+
+    <!-- Payment History -->
+    <div class="card">
+      <div class="section-title">Payment History</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Application</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>14 Mar 2024</td><td>DL-TG-2024-001233</td><td>₹800</td><td>UPI</td><td><span class="badge badge-success">Paid</span></td></tr>
+            <tr><td>10 Feb 2024</td><td>LL-TG-2024-007711</td><td>₹330</td><td>Card</td><td><span class="badge badge-success">Paid</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <hr class="section-divider">
+      <div class="section-title" style="font-size:15px">Upcoming</div>
+      <div class="card card-sm" style="background:var(--saffron-dim);border-color:var(--border-saffron)">
+        <div class="flex-between">
+          <div><div class="fw600">LL-TG-2025-088412</div><div class="text-muted text-sm">Application fee due</div></div>
+          <div style="text-align:right"><div class="amount-display" style="font-size:22px">₹330</div><span class="badge badge-warning">Pending</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────── 5. SLOT BOOKING ─── -->
+<section id="page-slot" class="page">
+  <div class="page-header">
+    <div class="breadcrumb">MeeSeva DL Portal › <span>Slot Booking</span></div>
+    <h1>RTO Slot Booking</h1>
+    <p>Book your visit to the RTO office for document verification and biometrics.</p>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="card mb16">
+        <div class="section-title">Select RTO Office</div>
+        <div class="form-group">
+          <label class="form-label">District</label>
+          <div class="input-wrap"><span class="input-icon">📍</span>
+            <select class="form-input" onchange="updateSlotRTO()">
+              <option>Hyderabad</option><option>Rangareddy</option><option>Medchal</option><option>Warangal</option><option>Nizamabad</option><option>Karimnagar</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">RTO Office</label>
+          <div class="input-wrap"><span class="input-icon">🏛️</span>
+            <select class="form-input">
+              <option>RTO Hyderabad — Central (HYB)</option>
+              <option>RTO Hyderabad — West (HYW)</option>
+              <option>RTO Hyderabad — East (HYE)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Service</label>
+          <div class="input-wrap"><span class="input-icon">🗂️</span>
+            <select class="form-input">
+              <option>Document Verification</option><option>Biometric Enrolment</option><option>DL Collection</option><option>Address Change</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar -->
+      <div class="card">
+        <div class="flex-between mb16">
+          <button class="btn btn-secondary btn-sm" onclick="calNav(-1)">← Prev</button>
+          <div class="fw600 font-raj" style="font-size:16px" id="calTitle">June 2025</div>
+          <button class="btn btn-secondary btn-sm" onclick="calNav(1)">Next →</button>
+        </div>
+        <div class="cal-grid" id="calGrid">
+          <div class="cal-day-name">Sun</div><div class="cal-day-name">Mon</div><div class="cal-day-name">Tue</div>
+          <div class="cal-day-name">Wed</div><div class="cal-day-name">Thu</div><div class="cal-day-name">Fri</div><div class="cal-day-name">Sat</div>
+        </div>
+        <div class="flex-row mt12" style="flex-wrap:wrap;gap:8px;font-size:11px">
+          <div class="flex-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--white);margin-right:4px"></div>Available</div>
+          <div class="flex-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--warning);margin-right:4px"></div>Limited</div>
+          <div class="flex-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--muted);margin-right:4px"></div>Full</div>
+          <div class="flex-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--saffron);margin-right:4px"></div>Selected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time Slots -->
+    <div class="card">
+      <div class="section-title">Available Time Slots</div>
+      <div class="text-muted text-sm mb16" id="slotDateLabel">Select a date from the calendar</div>
+      <div id="timeSlots" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="text-muted text-sm" style="grid-column:1/-1;text-align:center;padding:32px">📅 Pick a date to see available slots</div>
+      </div>
+      <hr class="section-divider" id="slotConfirmSep" style="display:none">
+      <div id="slotConfirm" style="display:none">
+        <div class="section-title" style="font-size:15px">Booking Summary</div>
+        <div class="card card-sm" style="background:var(--green-dim);border-color:rgba(19,136,8,0.25)">
+          <div class="text-muted text-sm">RTO</div>
+          <div class="fw600">RTO Hyderabad — Central</div>
+          <div class="text-muted text-sm mt8">Date &amp; Time</div>
+          <div class="fw600" id="slotSummary">—</div>
+          <div class="text-muted text-sm mt8">Service</div>
+          <div class="fw600">Document Verification</div>
+          <div class="text-muted text-sm mt8">Token Number</div>
+          <div class="font-raj fw700" style="font-size:18px;color:var(--saffron)" id="slotToken">—</div>
+        </div>
+        <button class="btn btn-green" style="width:100%;margin-top:14px;justify-content:center" onclick="confirmSlot()">✅ Confirm Booking</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────── 6. TEST SCHEDULER ─── -->
+<section id="page-test" class="page">
+  <div class="page-header">
+    <div class="breadcrumb">MeeSeva DL Portal › <span>Test Scheduler</span></div>
+    <h1>Driving Test Scheduler</h1>
+    <p>Schedule your LL theory test or DL practical driving test.</p>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="card mb16">
+        <div class="section-title">Test Details</div>
+        <div class="form-group">
+          <label class="form-label">Application ID</label>
+          <div class="input-wrap"><span class="input-icon">📋</span><input type="text" class="form-input" value="LL-TG-2025-088412" readonly style="opacity:0.7"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Test Type</label>
+          <div class="input-wrap"><span class="input-icon">📝</span>
+            <select class="form-input">
+              <option>Theory Test (LL — Computer Based)</option>
+              <option>Practical Driving Test (DL)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Language of Test</label>
+          <div class="input-wrap"><span class="input-icon">🗣️</span>
+            <select class="form-input">
+              <option>Telugu</option><option>English</option><option>Hindi</option><option>Urdu</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Preferred RTO</label>
+          <div class="input-wrap"><span class="input-icon">🏛️</span>
+            <select class="form-input">
+              <option>RTO Hyderabad — Central (HYB)</option><option>RTO Hyderabad — West (HYW)</option><option>RTO Secunderabad (SCB)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Test date selection -->
+        <div class="form-group">
+          <label class="form-label">Select Test Date</label>
+          <div class="cal-grid" id="testCalGrid" style="margin-top:8px">
+            <div class="cal-day-name">Sun</div><div class="cal-day-name">Mon</div><div class="cal-day-name">Tue</div>
+            <div class="cal-day-name">Wed</div><div class="cal-day-name">Thu</div><div class="cal-day-name">Fri</div><div class="cal-day-name">Sat</div>
+          </div>
+        </div>
+
+        <div id="testTimeRow" style="display:none">
+          <div class="form-group">
+            <label class="form-label">Select Batch</label>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div class="pay-method" style="flex:none;width:auto;padding:10px 16px" onclick="selTestBatch(this,'09:00 – 10:00 AM')">🕘 09:00 – 10:00 AM<br><small style="color:var(--green-light)">12 seats left</small></div>
+              <div class="pay-method" style="flex:none;width:auto;padding:10px 16px" onclick="selTestBatch(this,'11:00 AM – 12:00 PM')">🕚 11:00 AM – 12:00 PM<br><small style="color:var(--warning)">3 seats left</small></div>
+              <div class="pay-method" style="flex:none;width:auto;padding:10px 16px" onclick="selTestBatch(this,'02:00 – 03:00 PM')">🕑 02:00 – 03:00 PM<br><small style="color:var(--green-light)">8 seats left</small></div>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="scheduleTest()">📅 Schedule Test</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Info & Instructions -->
+    <div>
+      <div class="card mb16">
+        <div class="section-title">Theory Test Pattern</div>
+        <div class="flex-row" style="flex-wrap:wrap;gap:16px;margin-bottom:16px">
+          <div class="stat-card" style="flex:1;min-width:0">
+            <div class="stat-icon blue">❓</div>
+            <div><div class="stat-val">20</div><div class="stat-label">Questions</div></div>
+          </div>
+          <div class="stat-card" style="flex:1;min-width:0">
+            <div class="stat-icon orange">⏱️</div>
+            <div><div class="stat-val">20</div><div class="stat-label">Minutes</div></div>
+          </div>
+          <div class="stat-card" style="flex:1;min-width:0">
+            <div class="stat-icon green">🎯</div>
+            <div><div class="stat-val">60%</div><div class="stat-label">Pass Mark</div></div>
+          </div>
+        </div>
+        <div class="section-title" style="font-size:14px">Instructions</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+          <li class="flex-row text-sm"><span>📌</span>Carry original Aadhaar / any Govt ID</li>
+          <li class="flex-row text-sm"><span>📌</span>Arrive 15 minutes before your batch</li>
+          <li class="flex-row text-sm"><span>📌</span>No mobile phones inside the test hall</li>
+          <li class="flex-row text-sm"><span>📌</span>Test is on traffic signs, rules &amp; road safety</li>
+          <li class="flex-row text-sm"><span>📌</span>Re-test fee ₹50 if failed (3-day cooldown)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="section-title">My Scheduled Tests</div>
+        <div class="check-item" style="border-color:var(--border-saffron);background:var(--saffron-dim)">
+          <span class="check-status">🕘</span>
+          <div>
+            <div class="check-label">Theory Test — LL</div>
+            <div class="check-detail">14 Jun 2025 · 09:00 AM · RTO Hyderabad Central</div>
+          </div>
+          <span class="badge badge-warning" style="margin-left:auto">Upcoming</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────── 7. STATUS TRACKER ─── -->
+<section id="page-status" class="page">
+  <div class="page-header">
+    <div class="breadcrumb">MeeSeva DL Portal › <span>Status Tracker</span></div>
+    <h1>Application Status Tracker</h1>
+    <p>Live timeline for your driving licence application progress.</p>
+  </div>
+
+  <!-- Search bar -->
+  <div class="card mb16">
+    <div class="flex-row">
+      <div class="input-wrap" style="flex:1"><span class="input-icon">🔍</span><input type="text" class="form-input" placeholder="Enter Application ID  (e.g. LL-TG-2025-088412)" value="LL-TG-2025-088412"></div>
+      <button class="btn btn-primary">Track →</button>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- Timeline -->
+    <div class="card">
+      <div class="flex-between mb16">
+        <div class="section-title" style="margin:0">LL-TG-2025-088412</div>
+        <span class="badge badge-warning">In Progress</span>
+      </div>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line done"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Application Submitted</div>
+            <div class="tl-meta">25 May 2025 · 10:34 AM</div>
+            <div class="tl-desc">Your application was successfully submitted and assigned ID LL-TG-2025-088412.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line done"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Fee Payment Confirmed</div>
+            <div class="tl-meta">25 May 2025 · 11:05 AM</div>
+            <div class="tl-desc">₹330 received via UPI. Receipt No: PAY-2025-09812.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot done"></div><div class="tl-line done"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Document Verification</div>
+            <div class="tl-meta">27 May 2025 · 2:15 PM · RTO Central</div>
+            <div class="tl-desc">Aadhaar, birth certificate and photo verified by RTO officer.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot active"></div><div class="tl-line"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Theory Test Scheduled 🔄</div>
+            <div class="tl-meta">14 Jun 2025 · 09:00 AM · RTO Central</div>
+            <div class="tl-desc">Your LL theory test is scheduled. Carry Aadhaar on the test date.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot pending"></div><div class="tl-line"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">Learner's Licence Issued</div>
+            <div class="tl-meta">Pending</div>
+            <div class="tl-desc">LL will be issued digitally after passing the theory test.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-left"><div class="tl-dot pending"></div></div>
+          <div class="tl-content">
+            <div class="tl-title">DigiLocker &amp; Smart Card Dispatch</div>
+            <div class="tl-meta">Pending — approx 15 days after LL</div>
+            <div class="tl-desc">Physical smart card mailed to registered address.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Second Application -->
+    <div>
+      <div class="card mb16">
+        <div class="flex-between mb16">
+          <div class="section-title" style="margin:0">DL-TG-2024-001233</div>
+          <span class="badge badge-success">Completed</span>
+        </div>
+        <div class="timeline">
+          <div class="tl-item"><div class="tl-left"><div class="tl-dot done"></div><div class="tl-line done"></div></div><div class="tl-content"><div class="tl-title">Application Submitted</div><div class="tl-meta">01 Feb 2024</div></div></div>
+          <div class="tl-item"><div class="tl-left"><div class="tl-dot done"></div><div class="tl-line done"></div></div><div class="tl-content"><div class="tl-title">Fee Paid &amp; Documents Verified</div><div class="tl-meta">03 Feb 2024</div></div></div>
+          <div class="tl-item"><div class="tl-left"><div class="tl-dot done"></div><div class="tl-line done"></div></div><div class="tl-content"><div class="tl-title">Driving Test Passed ✅</div><div class="tl-meta">10 Mar 2024</div></div></div>
+          <div class="tl-item"><div class="tl-left"><div class="tl-dot done"></div></div><div class="tl-content"><div class="tl-title">DL Issued &amp; Dispatched</div><div class="tl-meta">14 Mar 2024</div></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Application Summary</div>
+        <table><tbody>
+          <tr><td class="text-muted">Total Applications</td><td class="fw600">2</td></tr>
+          <tr><td class="text-muted">Completed</td><td><span class="badge badge-success">1</span></td></tr>
+          <tr><td class="text-muted">In Progress</td><td><span class="badge badge-warning">1</span></td></tr>
+          <tr><td class="text-muted">Next Action</td><td class="text-saffron fw600">Theory Test — 14 Jun</td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────── 8. CERTIFICATE PDF ─── -->
+<section id="page-certificate" class="page">
+  <div class="page-header">
+    <div class="breadcrumb">MeeSeva DL Portal › <span>Certificate PDF</span></div>
+    <h1>Driving Licence Certificate</h1>
+    <p>Download or print your Learner's / Permanent Driving Licence.</p>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="card mb16">
+        <div class="section-title">Select Licence</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="check-item" style="cursor:pointer;border-color:rgba(19,136,8,0.3);background:var(--green-dim)" onclick="showCert('DL')">
+            <span class="check-status">🪪</span>
+            <div style="flex:1">
+              <div class="check-label">Permanent DL — LMV / MCWG</div>
+              <div class="check-detail">DL-TG-2024-001233 · Issued 14 Mar 2024</div>
+            </div>
+            <span class="badge badge-success">Available</span>
+          </div>
+          <div class="check-item" style="cursor:pointer;opacity:0.5" onclick="showToast('LL not yet issued — pending theory test','warning')">
+            <span class="check-status">📄</span>
+            <div style="flex:1">
+              <div class="check-label">Learner's Licence (LL)</div>
+              <div class="check-detail">LL-TG-2025-088412 · Pending</div>
+            </div>
+            <span class="badge badge-warning">Pending</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Download Options</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-primary" onclick="showToast('Downloading DL PDF...','info')">📄 Download PDF (A4)</button>
+          <button class="btn btn-secondary" onclick="showToast('DigiLocker sync initiated','info')">📲 Sync to DigiLocker</button>
+          <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Certificate</button>
+          <button class="btn btn-secondary" onclick="showToast('QR verification link copied!','success')">🔗 Share Verify Link</button>
+        </div>
+        <hr class="section-divider">
+        <div class="text-muted text-sm">🔐 This certificate is digitally signed and tamper-proof under IT Act 2000.</div>
+      </div>
+    </div>
+
+    <!-- Certificate Preview -->
+    <div>
+      <div class="cert-preview" id="certPreview">
+        <div class="cert-header">
+          <div class="cert-emblem">🪪</div>
+          <div class="cert-title">
+            <h2>Government of Telangana</h2>
+            <p>Motor Vehicles Department · Form 7 (Rule 15) — DRIVING LICENCE</p>
+          </div>
+        </div>
+        <div class="cert-dl-num">TG0420240012330</div>
+        <div class="cert-body">
+          <div class="cert-field"><label>Name</label><p>RAVI KUMAR</p></div>
+          <div class="cert-field"><label>Father's / Spouse Name</label><p>SURESH KUMAR</p></div>
+          <div class="cert-field"><label>Date of Birth</label><p>15/05/1998</p></div>
+          <div class="cert-field"><label>Blood Group</label><p>A+</p></div>
+          <div class="cert-field"><label>Date of Issue</label><p>14/03/2024</p></div>
+          <div class="cert-field"><label>Valid Till (Non-Trans)</label><p>13/03/2044</p></div>
+          <div class="cert-field"><label>Vehicle Classes</label><p>LMV · MCWG</p></div>
+          <div class="cert-field"><label>Issuing Authority</label><p>RTO Hyderabad Central (HYB)</p></div>
+          <div class="cert-field" style="grid-column:1/-1"><label>Address</label><p>H.No 5-6-789, Nampally, Hyderabad — 500 001, Telangana</p></div>
+        </div>
+        <div class="cert-stamp">DIGITALLY<br>SIGNED<br>✔</div>
+      </div>
+      <div class="card card-sm mt12 flex-between">
+        <span class="text-muted text-sm">QR: Verify at <span style="color:var(--saffron)">sarathi.parivahan.gov.in</span></span>
+        <span class="badge badge-success">Authentic</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────── 9. NOTIFICATIONS ─── -->
+<section id="page-notifications" class="page">
+  <div class="page-header">
+    <div class="breadcrumb">MeeSeva DL Portal › <span>Notifications</span></div>
+    <h1>Notifications Panel</h1>
+    <p>SMS, Email and System alerts for your applications.</p>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="flex-between mb16">
+        <div class="flex-row">
+          <button class="btn btn-secondary btn-sm" onclick="filterNotif('all')" id="nfAll" style="border-color:var(--saffron);color:var(--saffron)">All</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterNotif('sms')" id="nfSMS">SMS</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterNotif('email')" id="nfEmail">Email</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterNotif('system')" id="nfSystem">System</button>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="markAllRead()">Mark all read</button>
+      </div>
+
+      <div id="notifList">
+        <div class="notif-item unread" data-type="sms">
+          <div class="notif-icon-wrap" style="background:var(--saffron-dim)">📱</div>
+          <div style="flex:1">
+            <div class="notif-title">Theory Test Reminder — Tomorrow!</div>
+            <div class="notif-desc">Your LL theory test is scheduled for 14 Jun 2025 at 09:00 AM, RTO Hyderabad Central. Carry original Aadhaar.</div>
+            <div class="notif-time">📱 SMS · 13 Jun 2025 · 10:00 AM</div>
+          </div>
+          <div><span class="badge badge-warning">Unread</span></div>
+        </div>
+        <div class="notif-item unread" data-type="email">
+          <div class="notif-icon-wrap" style="background:var(--blue-dim)">✉️</div>
+          <div style="flex:1">
+            <div class="notif-title">Slot Booking Confirmed</div>
+            <div class="notif-desc">Your RTO slot for document verification on 27 May 2025 at 2:00 PM has been confirmed. Token: T-142.</div>
+            <div class="notif-time">✉️ Email · 25 May 2025 · 11:10 AM</div>
+          </div>
+          <div><span class="badge badge-blue">Unread</span></div>
+        </div>
+        <div class="notif-item unread" data-type="system">
+          <div class="notif-icon-wrap" style="background:var(--green-dim)">🔔</div>
+          <div style="flex:1">
+            <div class="notif-title">Document Verification — Approved ✅</div>
+            <div class="notif-desc">Your documents for application LL-TG-2025-088412 were verified and approved by the RTO officer.</div>
+            <div class="notif-time">🔔 System · 27 May 2025 · 2:30 PM</div>
+          </div>
+          <div><span class="badge badge-success">Unread</span></div>
+        </div>
+        <div class="notif-item" data-type="sms">
+          <div class="notif-icon-wrap" style="background:var(--saffron-dim)">📱</div>
+          <div style="flex:1">
+            <div class="notif-title">Fee Payment Receipt</div>
+            <div class="notif-desc">₹330 received for LL-TG-2025-088412. TxnID: PAY-2025-09812. Thank you!</div>
+            <div class="notif-time">📱 SMS · 25 May 2025 · 11:07 AM</div>
+          </div>
+        </div>
+        <div class="notif-item" data-type="email">
+          <div class="notif-icon-wrap" style="background:var(--blue-dim)">✉️</div>
+          <div style="flex:1">
+            <div class="notif-title">Application Submitted Successfully</div>
+            <div class="notif-desc">Your Learner's Licence application (LL-TG-2025-088412) has been received. Expected processing: 7–10 working days.</div>
+            <div class="notif-time">✉️ Email · 25 May 2025 · 10:38 AM</div>
+          </div>
+        </div>
+        <div class="notif-item" data-type="system">
+          <div class="notif-icon-wrap" style="background:var(--green-dim)">🪪</div>
+          <div style="flex:1">
+            <div class="notif-title">Permanent DL Dispatched 🚀</div>
+            <div class="notif-desc">Your DL smart card has been dispatched via Speed Post (Tracking: SP123456789IN). Delivery in 3–5 days.</div>
+            <div class="notif-time">🔔 System · 14 Mar 2024 · 4:00 PM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="card">
+      <div class="section-title">Notification Settings</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="flex-between">
+          <div><div class="fw600 text-sm">SMS Alerts</div><div class="text-muted text-sm">To +91 98765 43210</div></div>
+          <div onclick="toggleSwitch(this)" style="width:44px;height:24px;border-radius:12px;background:var(--green);cursor:pointer;position:relative;transition:background 0.2s">
+            <div style="position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:white;transition:right 0.2s"></div>
+          </div>
+        </div>
+        <div class="flex-between">
+          <div><div class="fw600 text-sm">Email Notifications</div><div class="text-muted text-sm">ravikumar@gmail.com</div></div>
+          <div onclick="toggleSwitch(this)" style="width:44px;height:24px;border-radius:12px;background:var(--green);cursor:pointer;position:relative;transition:background 0.2s">
+            <div style="position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:white;transition:right 0.2s"></div>
+          </div>
+        </div>
+        <div class="flex-between">
+          <div><div class="fw600 text-sm">Test Reminders</div><div class="text-muted text-sm">24h before test date</div></div>
+          <div onclick="toggleSwitch(this)" style="width:44px;height:24px;border-radius:12px;background:var(--green);cursor:pointer;position:relative;transition:background 0.2s">
+            <div style="position:absolute;right:3px;top:3px;width:18px;height:18px;border-radius:50%;background:white;transition:right 0.2s"></div>
+          </div>
+        </div>
+        <div class="flex-between">
+          <div><div class="fw600 text-sm">WhatsApp Updates</div><div class="text-muted text-sm">Optional</div></div>
+          <div onclick="toggleSwitch(this)" style="width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,0.1);cursor:pointer;position:relative;transition:background 0.2s" data-off>
+            <div style="position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:white;transition:left 0.2s"></div>
+          </div>
+        </div>
+      </div>
+      <hr class="section-divider">
+      <div class="section-title" style="font-size:15px">Alert Statistics</div>
+      <div class="stats-grid" style="grid-template-columns:1fr 1fr">
+        <div class="stat-card"><div class="stat-icon orange">📱</div><div><div class="stat-val">8</div><div class="stat-label">SMS Sent</div></div></div>
+        <div class="stat-card"><div class="stat-icon blue">✉️</div><div><div class="stat-val">5</div><div class="stat-label">Emails</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────────────────────────── 10. ADMIN PANEL ─── -->
+<section id="page-admin" class="page">
+  <div class="page-header">
+    <div class="breadcrumb">MeeSeva DL Portal › <span>Admin Panel</span></div>
+    <h1>RTO Officer Dashboard</h1>
+    <p>Manage applications, verify documents, and export data.</p>
+  </div>
+
+  <!-- Admin Stats -->
+  <div class="stats-grid mb16" style="grid-template-columns:repeat(5,1fr)">
+    <div class="stat-card"><div class="stat-icon orange">📋</div><div><div class="stat-val">247</div><div class="stat-label">Total Applications</div></div></div>
+    <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-val">182</div><div class="stat-label">Approved</div></div></div>
+    <div class="stat-card"><div class="stat-icon blue">⏳</div><div><div class="stat-val">43</div><div class="stat-label">Pending</div></div></div>
+    <div class="stat-card"><div class="stat-icon purple">❌</div><div><div class="stat-val">22</div><div class="stat-label">Rejected</div></div></div>
+    <div class="stat-card"><div class="stat-icon orange">📅</div><div><div class="stat-val">14</div><div class="stat-label">Tests Today</div></div></div>
+  </div>
+
+  <!-- Filters & Export -->
+  <div class="card mb16">
+    <div class="flex-between" style="flex-wrap:wrap;gap:12px">
+      <div class="admin-filter">
+        <div class="input-wrap"><span class="input-icon">🔍</span><input type="text" class="form-input" placeholder="Search by name / App ID" style="width:240px"></div>
+        <select class="form-input" style="width:160px;padding-left:12px">
+          <option>All Types</option><option>LL</option><option>DL</option><option>Renewal</option>
+        </select>
+        <select class="form-input" style="width:160px;padding-left:12px">
+          <option>All Status</option><option>Pending</option><option>Approved</option><option>Rejected</option>
+        </select>
+        <input type="date" class="form-input" style="width:160px;padding-left:12px">
+      </div>
+      <div class="flex-row">
+        <button class="btn btn-green btn-sm" onclick="exportExcel()">📊 Export Excel</button>
+        <button class="btn btn-secondary btn-sm" onclick="showToast('PDF report generated','info')">📄 Export PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Applications Table -->
+  <div class="card">
+    <div class="flex-between mb16">
+      <div class="section-title" style="margin:0">Applications</div>
+      <div class="text-muted text-sm">Showing 10 of 247</div>
+    </div>
+    <div class="table-wrap">
+      <table id="adminTable">
+        <thead>
+          <tr>
+            <th>App ID</th>
+            <th>Applicant</th>
+            <th>Type</th>
+            <th>RTO</th>
+            <th>Date</th>
+            <th>Fee</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody">
+        </tbody>
+      </table>
+    </div>
+    <div class="flex-between mt16">
+      <div class="text-muted text-sm">Page 1 of 25</div>
+      <div class="flex-row">
+        <button class="btn btn-secondary btn-sm">← Prev</button>
+        <button class="btn btn-secondary btn-sm">Next →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span id="toastIcon">✅</span>
+  <span id="toastMsg">Action completed</span>
+</div>
+
+<script>
+/* ── NAVIGATION ── */
+// CO5: Routing — SPA-style navigation: show/hide page sections (React Router equivalent)
+function nav(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelector(`.nav-item[onclick="nav('${page}')"]`).classList.add('active');
+  window.scrollTo(0,0);
+  if (page === 'slot') initCal();
+  if (page === 'test') initTestCal();
+  if (page === 'admin') initAdminTable();
+}
+
+/* ── TOAST ── */
+// CO3: Component Logic — Toast notification trigger function
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  const icons = { success:'✅', warning:'⚠️', info:'ℹ️', danger:'❌' };
+  document.getElementById('toastIcon').textContent = icons[type] || '✅';
+  document.getElementById('toastMsg').textContent = msg;
+  t.className = `toast ${type} show`;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ── ELIGIBILITY ── */
+// CO2: JS/TS Engineering — Data model: eligibility age limits (pure constant object)
+const AGE_LIMITS = { LL_MC:16, LL_LMV:18, DL_LMV:18, DL_TRANS:20 };
+// CO5: Forms Engineering — Eligibility validation pipeline (multi-rule)
+function runEligibility() {
+  const dob = document.getElementById('eligDob').value;
+  const type = document.getElementById('eligType').value;
+  if (!dob || !type) { showToast('Please fill Date of Birth and Licence Type', 'warning'); return; }
+
+  const today = new Date();
+  const birthDate = new Date(dob);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+
+  const minAge = AGE_LIMITS[type];
+  const ageOk = age >= minAge;
+  const aadhar = document.getElementById('eligAadhar').value.replace(/\s/g,'');
+  const aadharOk = aadhar.length === 12;
+
+  const checks = [
+    { label: 'Age Requirement', ok: ageOk, detail: `You are ${age} years old. Minimum: ${minAge} years.` },
+    { label: 'Aadhaar Number Format', ok: aadharOk, detail: aadharOk ? 'Valid 12-digit Aadhaar format.' : 'Enter valid 12-digit Aadhaar.' },
+    { label: 'Valid State (Telangana)', ok: true, detail: 'Eligible to apply at Telangana RTO.' },
+    { label: 'No Existing DQ', ok: true, detail: 'No disqualification recorded in VAHAN database.' },
+  ];
+
+  const el = document.getElementById('eligChecks');
+  el.innerHTML = checks.map(c => `
+    <div class="check-item" style="border-color:${c.ok?'rgba(19,136,8,0.2)':'rgba(255,23,68,0.2)'};background:${c.ok?'var(--green-dim)':'rgba(255,23,68,0.08)'}">
+      <span class="check-status">${c.ok ? '✅' : '❌'}</span>
+      <div><div class="check-label">${c.label}</div><div class="check-detail">${c.detail}</div></div>
+    </div>`).join('');
+
+  const allOk = checks.every(c=>c.ok);
+  document.getElementById('eligVerdict').innerHTML = allOk
+    ? `<div style="text-align:center"><div style="font-size:40px;margin-bottom:8px">🎉</div><div class="fw700 font-raj" style="font-size:20px;color:var(--green-light)">You are Eligible!</div><p class="text-muted text-sm mt8">Proceed to submit your application.</p><button class="btn btn-primary mt16" onclick="nav('application')">Apply Now →</button></div>`
+    : `<div style="text-align:center"><div style="font-size:40px;margin-bottom:8px">⚠️</div><div class="fw700 font-raj" style="font-size:20px;text-danger">Not Eligible Yet</div><p class="text-muted text-sm mt8">Please resolve the above issues before applying.</p></div>`;
+
+  document.getElementById('eligInfo').style.display = 'none';
+  document.getElementById('eligResult').style.display = 'block';
+}
+
+/* ── APPLICATION STEPS ── */
+let appCurrentStep = 1;
+// CO2: JS Engineering — Static data model: document checklist array
+const DOCS = ['Aadhaar Card (Front & Back)', 'Age Proof (Birth Certificate / Marksheet)', 'Passport Size Photo (2 copies)', 'Signature Scan', 'Address Proof'];
+
+// CO4: State Architecture — Multi-step form state machine (forward navigation)
+function appNext(step) {
+  if (step < 5) {
+    document.getElementById('appStep' + step).style.display = 'none';
+    document.getElementById('appStep' + (step+1)).style.display = 'block';
+    if (step+1 === 3) renderDocs();
+    updateSteps(step+1);
+    appCurrentStep = step+1;
+  }
+  if (step === 4) { nav('payment'); }
+}
+function appBack(step) {
+  document.getElementById('appStep' + step).style.display = 'none';
+  document.getElementById('appStep' + (step-1)).style.display = 'block';
+  updateSteps(step-1);
+  appCurrentStep = step-1;
+}
+// CO4: State Architecture — Step indicator DOM updates driven by form state
+function updateSteps(current) {
+  for (let i=1;i<=5;i++) {
+    const dot = document.getElementById('sd'+i);
+    const lbl = document.getElementById('sl-'+i);
+    dot.className = 'step-dot' + (i<current?' done':i===current?' active':'');
+    if (lbl) lbl.className = i<current?'done':i===current?'active':'';
+    if (i<5) {
+      const line = document.getElementById('sl'+i);
+      if (line) line.className = 'step-line' + (i<current?' done':'');
+    }
+  }
+}
+function renderDocs() {
+  document.getElementById('docUploads').innerHTML = DOCS.map((d,i) => `
+    <div class="check-item" style="cursor:default">
+      <span class="check-status" id="docStatus${i}">📎</span>
+      <div style="flex:1"><div class="check-label">${d}</div><div class="check-detail" id="docName${i}">No file selected</div></div>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer">
+        Upload <input type="file" style="display:none" onchange="docUploaded(${i},this)">
+      </label>
+    </div>`).join('');
+}
+function docUploaded(i, input) {
+  if (input.files[0]) {
+    document.getElementById('docName'+i).textContent = input.files[0].name;
+    document.getElementById('docStatus'+i).textContent = '✅';
+  }
+}
+
+/* ── PAYMENT ── */
+// CO3: Component Logic — Payment method selector (UI state management)
+function selectPay(el, method) {
+  document.querySelectorAll('.pay-method').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  ['UPI','CARD','NETBANK','WALLET'].forEach(m => {
+    const div = document.getElementById('pay'+m);
+    if (div) div.style.display = (m===method)?'block':'none';
+  });
+  // show CARD div (space in id fix)
+  const cardDiv = document.getElementById('payCAR D');
+  if (cardDiv) cardDiv.style.display = (method==='CARD') ? 'block' : 'none';
+}
+// CO4: State Architecture — Mock payment processing (async UI feedback)
+function processPayment() {
+  showToast('Processing payment…', 'info');
+  setTimeout(() => {
+    showToast('₹330 paid successfully! TxnID: PAY-2025-09' + Math.floor(Math.random()*9000+1000), 'success');
+  }, 2000);
+}
+
+/* ── CALENDAR (SLOT) ── */
+let calYear = 2025, calMonth = 5; // June 2025
+let selCalDate = null, selCalTime = null;
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const SLOT_TIMES = ['09:00 AM','09:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','02:00 PM','02:30 PM','03:00 PM','03:30 PM'];
+
+// CO5: Routing & UX — Calendar initialisation for RTO slot booking
+function initCal() { renderCal(); }
+function calNav(dir) { calMonth += dir; if (calMonth>11){calMonth=0;calYear++;} if (calMonth<0){calMonth=11;calYear--;} renderCal(); }
+// CO3: Component Logic — Calendar grid renderer: generates day cells dynamically
+function renderCal() {
+  const grid = document.getElementById('calGrid');
+  document.getElementById('calTitle').textContent = MONTHS[calMonth] + ' ' + calYear;
+  // remove old day cells
+  grid.querySelectorAll('.cal-day').forEach(d=>d.remove());
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const today = new Date();
+
+  for (let i=0;i<firstDay;i++) {
+    const d = document.createElement('div'); d.className='cal-day disabled'; d.textContent=''; grid.appendChild(d);
+  }
+  for (let d=1;d<=daysInMonth;d++) {
+    const cell = document.createElement('div');
+    const date = new Date(calYear, calMonth, d);
+    const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const isSun = date.getDay() === 0;
+    const isToday = date.toDateString() === today.toDateString();
+    const isSelected = selCalDate && selCalDate.getDate()===d && selCalDate.getMonth()===calMonth;
+    const rand = Math.random();
+    cell.textContent = d;
+    if (isSelected) cell.className='cal-day available selected';
+    else if (isPast || isSun) cell.className='cal-day disabled';
+    else if (isToday) cell.className='cal-day today';
+    else if (rand > 0.7) cell.className='cal-day full';
+    else if (rand > 0.5) cell.className='cal-day limited';
+    else cell.className='cal-day available';
+
+    if (!isPast && !isSun && !(cell.className.includes('full'))) {
+      cell.onclick = () => selectCalDay(d, cell);
+    }
+    grid.appendChild(cell);
+  }
+}
+function selectCalDay(d, cell) {
+  document.querySelectorAll('#calGrid .cal-day').forEach(c=>c.classList.remove('selected'));
+  cell.classList.add('selected');
+  selCalDate = new Date(calYear, calMonth, d);
+  const label = selCalDate.toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('slotDateLabel').textContent = 'Slots for ' + label;
+  renderTimeSlots(label);
+}
+// CO4: State/UX — Time slot renderer: dynamic list from selected date
+function renderTimeSlots(dateLabel) {
+  const container = document.getElementById('timeSlots');
+  container.innerHTML = SLOT_TIMES.map((t,i) => {
+    const full = Math.random() > 0.7;
+    return `<div class="pay-method${full?' full':'selected'}" style="pointer-events:${full?'none':'auto'};opacity:${full?0.4:1}" onclick="selectSlotTime(this,'${t}','${dateLabel}')">
+      <div class="pay-icon" style="font-size:18px">${full?'🔴':'🟢'}</div>
+      <div class="pay-name">${t}</div>
+      <div style="font-size:10px;color:${full?'var(--muted)':'var(--green-light)'}">${full?'Full':'Available'}</div>
+    </div>`;
+  }).join('');
+}
+function selectSlotTime(el, time, date) {
+  document.querySelectorAll('#timeSlots .pay-method').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  selCalTime = time;
+  document.getElementById('slotSummary').textContent = date + ' · ' + time;
+  document.getElementById('slotToken').textContent = 'T-' + Math.floor(Math.random()*900+100);
+  document.getElementById('slotConfirmSep').style.display = '';
+  document.getElementById('slotConfirm').style.display = '';
+}
+// CO4: State Architecture — Slot booking confirmation + navigation redirect
+function confirmSlot() {
+  showToast('Slot booked successfully! Token: ' + document.getElementById('slotToken').textContent, 'success');
+  setTimeout(() => nav('status'), 1500);
+}
+
+/* ── TEST CALENDAR ── */
+function initTestCal() {
+  const grid = document.getElementById('testCalGrid');
+  grid.querySelectorAll('.cal-day').forEach(d=>d.remove());
+  const today = new Date(2025, 5, 1);
+  const firstDay = today.getDay();
+  for (let i=0;i<firstDay;i++) { const d=document.createElement('div');d.className='cal-day disabled';grid.appendChild(d); }
+  for (let d=1;d<=30;d++) {
+    const cell = document.createElement('div');
+    const date = new Date(2025,5,d);
+    const isSun = date.getDay()===0;
+    cell.textContent = d;
+    if (isSun || d<3) { cell.className='cal-day disabled'; }
+    else if (d===14) { cell.className='cal-day today'; cell.onclick=()=>selTestDay(cell,d); }
+    else { const r=Math.random(); cell.className=r>0.6?'cal-day limited':'cal-day available'; cell.onclick=()=>selTestDay(cell,d); }
+    grid.appendChild(cell);
+  }
+}
+function selTestDay(cell, d) {
+  document.querySelectorAll('#testCalGrid .cal-day').forEach(c=>c.classList.remove('selected'));
+  cell.classList.add('selected');
+  document.getElementById('testTimeRow').style.display = 'block';
+}
+function selTestBatch(el, batch) {
+  document.querySelectorAll('#testTimeRow .pay-method').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+// CO5: Routing — Schedule test: triggers success toast + navigation
+function scheduleTest() {
+  showToast('Test scheduled successfully!', 'success');
+  setTimeout(() => nav('status'), 1500);
+}
+
+/* ── ADMIN TABLE DATA ── */
+// CO2: JS Engineering — Structured data model: admin applications table dataset
+const ADMIN_DATA = [
+  { id:'LL-TG-2025-088412', name:'Ravi Kumar',      type:'LL', rto:'HYB', date:'25 May 2025', fee:'₹330', status:'pending' },
+  { id:'DL-TG-2025-019345', name:'Priya Sharma',    type:'DL', rto:'HYW', date:'20 May 2025', fee:'₹800', status:'approved' },
+  { id:'LL-TG-2025-076234', name:'Suresh Reddy',    type:'LL', rto:'SCB', date:'18 May 2025', fee:'₹330', status:'approved' },
+  { id:'DL-TG-2025-011203', name:'Anita Nair',      type:'DL', rto:'HYB', date:'15 May 2025', fee:'₹800', status:'rejected' },
+  { id:'LL-TG-2025-063112', name:'Mohammed Farhan', type:'LL', rto:'HYE', date:'12 May 2025', fee:'₹330', status:'approved' },
+  { id:'DL-TG-2025-008877', name:'Kavitha Lakshmi', type:'DL', rto:'HYB', date:'10 May 2025', fee:'₹800', status:'pending' },
+  { id:'LL-TG-2025-054001', name:'Raj Vardhan',     type:'LL', rto:'HYW', date:'08 May 2025', fee:'₹330', status:'approved' },
+  { id:'DL-TG-2025-003481', name:'Divya Menon',     type:'DL', rto:'SCB', date:'05 May 2025', fee:'₹800', status:'approved' },
+  { id:'LL-TG-2025-041267', name:'Kiran Babu',      type:'LL', rto:'HYB', date:'02 May 2025', fee:'₹330', status:'rejected' },
+  { id:'DL-TG-2025-000991', name:'Sandhya Kumari',  type:'DL', rto:'HYE', date:'28 Apr 2025', fee:'₹800', status:'approved' },
+];
+const STATUS_BADGE = { approved:'badge-success', pending:'badge-warning', rejected:'badge-danger' };
+
+// CO2: Data rendering — Populates admin table from data model using template literals
+function initAdminTable() {
+  const tbody = document.getElementById('adminTableBody');
+  tbody.innerHTML = ADMIN_DATA.map(r => `
+    <tr>
+      <td class="font-raj" style="color:var(--saffron)">${r.id}</td>
+      <td>${r.name}</td>
+      <td><span class="badge badge-blue">${r.type}</span></td>
+      <td>${r.rto}</td>
+      <td>${r.date}</td>
+      <td class="fw600">${r.fee}</td>
+      <td><span class="badge ${STATUS_BADGE[r.status]}">${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span></td>
+      <td>
+        <div class="flex-row">
+          <button class="btn btn-secondary btn-sm" onclick="showToast('Opening ${r.id}','info')">View</button>
+          ${r.status==='pending'?`<button class="btn btn-green btn-sm" onclick="showToast('Approved: ${r.id}','success')">✅</button><button class="btn btn-danger btn-sm" onclick="showToast('Rejected: ${r.id}','danger')">❌</button>`:''}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+/* ── EXPORT EXCEL (mock) ── */
+// CO6: Build/CI-CD — CSV export (data pipeline to downloadable file)
+function exportExcel() {
+  const rows = [['App ID','Applicant','Type','RTO','Date','Fee','Status'],...ADMIN_DATA.map(r=>[r.id,r.name,r.type,r.rto,r.date,r.fee,r.status])];
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='MeeSeva_Applications_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('Excel/CSV exported successfully!', 'success');
+}
+
+/* ── NOTIFICATIONS ── */
+// CO3: Component Logic — Notification filter: DOM filtering by data-type attribute
+function filterNotif(type) {
+  ['all','sms','email','system'].forEach(t => {
+    const btn = document.getElementById('nf'+t.charAt(0).toUpperCase()+t.slice(1));
+    if (btn) btn.style.cssText = '';
+  });
+  const activeBtn = document.getElementById('nf'+type.charAt(0).toUpperCase()+type.slice(1));
+  if (activeBtn) activeBtn.style.cssText = 'border-color:var(--saffron);color:var(--saffron)';
+  document.querySelectorAll('#notifList .notif-item').forEach(item => {
+    item.style.display = (type==='all' || item.dataset.type===type) ? '' : 'none';
+  });
+}
+// CO4: State Architecture — Mark-all-read: updates UI state across all notification items
+function markAllRead() {
+  document.querySelectorAll('.notif-item').forEach(i => { i.classList.remove('unread'); i.querySelector('.badge')?.remove(); });
+  document.getElementById('navNotif').querySelector('.nav-badge')?.remove();
+  showToast('All notifications marked as read', 'success');
+}
+
+/* ── TOGGLE SWITCH ── */
+// CO3: Component Logic — Toggle switch: binary UI state with visual feedback
+function toggleSwitch(el) {
+  const thumb = el.querySelector('div');
+  if (el.hasAttribute('data-off')) {
+    el.removeAttribute('data-off'); el.style.background = 'var(--green)';
+    thumb.style.left = ''; thumb.style.right = '3px';
+  } else {
+    el.setAttribute('data-off',''); el.style.background = 'rgba(255,255,255,0.1)';
+    thumb.style.right = ''; thumb.style.left = '3px';
+  }
+}
+
+/* ── CERT ── */
+function showCert(type) { showToast('Certificate loaded', 'success'); }
+
+/* ── PAYMENT FIX: id has space ── */
+// CO4: State Architecture — On page load: fix DOM bugs and init admin table
+document.addEventListener('DOMContentLoaded', () => {
+  // Fix CARD div id
+  const wrongEl = document.getElementById('payCAR D');
+  if (wrongEl) wrongEl.id = 'payCARD';
+  initAdminTable();
+});
+</script>
+</body>
+</html>
